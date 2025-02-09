@@ -13,6 +13,9 @@ class PageState(rx.State):
     fecha_ini: str = today.replace(month=1, day=1).strftime("%Y-%m-%d")
     fecha_fin: str = today.strftime("%Y-%m-%d")
     logs: list[str] = []
+    data_balances: list[dict] = []
+    data_balances_mensuales: list[dict] = []
+    data_balances_anuales: list[dict] = []
 
     search_value: str = ""
     sort_value: str = ""
@@ -21,6 +24,17 @@ class PageState(rx.State):
     total_items: int = 0
     offset: int = 0
     limit: int = 12  # Number of rows per page
+
+    balance_type: str = "diario"  # Estado inicial (Diario)
+
+    Mostrar: str = "Tabla"
+
+    def set_mostrado(self, var: str):
+        self.Mostrar = var
+        
+    # Método para actualizar el tipo de balance seleccionado
+    def set_balance_type(self, balance: str):
+        self.balance_type = balance
 
 
     def cambiar_formato(self):
@@ -44,9 +58,10 @@ class PageState(rx.State):
         movimientos = await obtener_Tabla(self.banco,self.fecha_ini,self.fecha_fin)
         # Verifica el contenido de los movimientos
         # Asegúrate de que las claves del diccionario coinciden con las propiedades del modelo Movimiento
-
+        
         self.Tabla = [Movimiento(**row) for row in movimientos]
         self.total_items = len(self.Tabla)
+        self.obtener_ingresos_gastos()
 
 
     @rx.var(cache=True)
@@ -128,5 +143,106 @@ class PageState(rx.State):
 
     def set_sort_value(self,var:str):
         self.sort_value = var
+
+
+    def obtener_ingresos_gastos(self):
+        movimientos = self.Tabla
+        dias = sorted(set([row.Fecha for row in movimientos]))  # Ordenar fechas
+        lista = []
+
+        ingresos_acumulados = 0
+        gastos_acumulados = 0
+
+        for dia in dias:
+            data = {}
+            movimientos_diarios = [mov for mov in movimientos if mov.Fecha == dia]
+
+            ingresos_dia = sum([mov.Importe for mov in movimientos_diarios if mov.Importe > 0])
+            gastos_dia = sum([mov.Importe for mov in movimientos_diarios if mov.Importe < 0])
+
+            ingresos_acumulados += ingresos_dia
+            gastos_acumulados += abs(gastos_dia)  # Gasto como positivo
+
+            data["Fecha"] = dia
+            data["Ingresos"] = round(ingresos_dia, 2)
+            data["Gastos"] = abs(round(gastos_dia, 2))
+            data["Ingresos Acumulados"] = round(ingresos_acumulados, 2)
+            data["Gastos Acumulados"] = round(gastos_acumulados, 2)
+
+            lista.append(data)
+
+        self.data_balances = lista
+        self.obtener_ingresos_gastos_mensuales()
+        self.obtener_ingresos_gastos_anuales()
+
+
+
+    def obtener_ingresos_gastos_mensuales(self):
+        """Agrupa los ingresos y gastos por mes y calcula acumulados."""
+        data_mensual = {}
+        
+        ingresos_acumulados = 0
+        gastos_acumulados = 0
+
+        for item in self.data_balances:
+            fecha = datetime.strptime(item["Fecha"], "%Y-%m-%d")
+            mes = fecha.strftime("%Y-%m")  # Formato Año-Mes (Ej: "2025-01")
+
+            if mes not in data_mensual:
+                data_mensual[mes] = {"Ingresos": 0, "Gastos": 0}
+
+            data_mensual[mes]["Ingresos"] += item["Ingresos"]
+            data_mensual[mes]["Gastos"] += item["Gastos"]
+
+        lista_mensual = []
+        for mes in sorted(data_mensual.keys()):
+            ingresos_acumulados += data_mensual[mes]["Ingresos"]
+            gastos_acumulados += data_mensual[mes]["Gastos"]
+
+            lista_mensual.append({
+                "Fecha": mes,
+                "Ingresos": round(data_mensual[mes]["Ingresos"], 2),
+                "Gastos": round(data_mensual[mes]["Gastos"], 2),
+                "Ingresos Acumulados": round(ingresos_acumulados, 2),
+                "Gastos Acumulados": round(gastos_acumulados, 2)
+            })
+
+        self.data_balances_mensuales = lista_mensual
+
+    def obtener_ingresos_gastos_anuales(self):
+        """Agrupa los ingresos y gastos por año y calcula acumulados."""
+        data_anual = {}
+
+        ingresos_acumulados = 0
+        gastos_acumulados = 0
+
+        for item in self.data_balances:
+            fecha = datetime.strptime(item["Fecha"], "%Y-%m-%d")
+            anio = fecha.strftime("%Y")  # Formato Año (Ej: "2025")
+
+            if anio not in data_anual:
+                data_anual[anio] = {"Ingresos": 0, "Gastos": 0}
+
+            data_anual[anio]["Ingresos"] += item["Ingresos"]
+            data_anual[anio]["Gastos"] += item["Gastos"]
+
+        lista_anual = []
+        for anio in sorted(data_anual.keys()):
+            ingresos_acumulados += data_anual[anio]["Ingresos"]
+            gastos_acumulados += data_anual[anio]["Gastos"]
+
+            lista_anual.append({
+                "Fecha": anio,
+                "Ingresos": round(data_anual[anio]["Ingresos"], 2),
+                "Gastos": round(data_anual[anio]["Gastos"], 2),
+                "Ingresos Acumulados": round(ingresos_acumulados, 2),
+                "Gastos Acumulados": round(gastos_acumulados, 2)
+            })
+
+        self.data_balances_anuales = lista_anual
+
+
+
+    
 
 
