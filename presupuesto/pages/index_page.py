@@ -2,6 +2,7 @@ import reflex as rx
 from presupuesto.components.calendario import calendar_dialog
 from presupuesto.views.table import main_table,_header_cell
 from presupuesto.views.balances import balances_selector
+from presupuesto.views.categorias_chart import pie_double
 from presupuesto.states.state import PageState
 
 def header(text,icon):
@@ -19,6 +20,7 @@ def Selector():
         rx.segmented_control.root(
             rx.segmented_control.item(header("Tabla","table-2"), value="Tabla"),
             rx.segmented_control.item(header("Balances","chart-spline"), value="Balances"),
+            rx.segmented_control.item(header("Categorias","chart-pie"), value="Categorias"),
             on_change=PageState.set_mostrado,  # Estado para cambiar el balance mostrado
             value=PageState.Mostrar,
         ),
@@ -28,7 +30,12 @@ def Selector():
             rx.cond(
                 PageState.Mostrar == "Tabla",
                 main_table(),
-                balances_selector()
+                rx.cond(
+                     PageState.Mostrar == "Balances",
+                     balances_selector(),
+                     pie_double()
+                )
+                
             ),
             width="100%",
         ),
@@ -40,7 +47,7 @@ def Selector():
 @rx.page(on_load=PageState.crear_tabla)
 def index() -> rx.Component:
     return rx.box(
-        rx.theme_panel(default_open=True),
+        rx.theme_panel(default_open=False),
         rx.heading("Bienvenido Javi!", size="7"),
         Selector(),
         padding="25px",

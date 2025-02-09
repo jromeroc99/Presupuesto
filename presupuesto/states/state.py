@@ -12,10 +12,12 @@ class PageState(rx.State):
     end_date: str = today.strftime("%a %b %d %Y") # Valor por defecto vacío para end_date
     fecha_ini: str = today.replace(month=1, day=1).strftime("%Y-%m-%d")
     fecha_fin: str = today.strftime("%Y-%m-%d")
-    logs: list[str] = []
+
+
     data_balances: list[dict] = []
     data_balances_mensuales: list[dict] = []
     data_balances_anuales: list[dict] = []
+    data_categorias: list[dict] = []
 
     search_value: str = ""
     sort_value: str = ""
@@ -25,15 +27,19 @@ class PageState(rx.State):
     offset: int = 0
     limit: int = 12  # Number of rows per page
 
+    Mostrar: str = "Tabla"
     balance_type: str = "diario"  # Estado inicial (Diario)
 
-    Mostrar: str = "Tabla"
+    ingresos_filtrado: str = ""
+    gastos_filtrado: str = ""
+    balance_filtrado: str = ""
+    
 
-    def set_mostrado(self, var: str):
+    def set_mostrado(self, var: str|list[str]):
         self.Mostrar = var
         
     # Método para actualizar el tipo de balance seleccionado
-    def set_balance_type(self, balance: str):
+    def set_balance_type(self, balance: str|list[str]):
         self.balance_type = balance
 
 
@@ -62,6 +68,13 @@ class PageState(rx.State):
         self.Tabla = [Movimiento(**row) for row in movimientos]
         self.total_items = len(self.Tabla)
         self.obtener_ingresos_gastos()
+        self.obtener_categorias()
+
+        self.ingresos_filtrado = f"Ingresos: {round(sum([mov.Importe for mov in self.Tabla if mov.Importe > 0]),2)} €"
+        self.gastos_filtrado = f"Gastos: {round(sum([mov.Importe for mov in self.Tabla if mov.Importe < 0]),2)} €"
+        self.balance_filtrado = f"Balance: {round(sum([mov.Importe for mov in self.Tabla]),2)} €"
+
+        
 
 
     @rx.var(cache=True)
@@ -70,13 +83,13 @@ class PageState(rx.State):
 
         # Filtrar movimientos basado en el valor seleccionado
         if self.sort_value:
-            if self.sort_value in ["Saldo", "Importe"]:  # Cambié 'salary' y 'number' por los campos de Movimiento
+            if self.sort_value in ["Saldo", "Importe"]:  # Orrdena los numeros
                 movimientos = sorted(
                     movimientos,
                     key=lambda movimiento: float(getattr(movimiento, self.sort_value)),
                     reverse=self.sort_reverse,
                 )
-            else:
+            else: # Ordena las letras
                 movimientos = sorted(
                     movimientos,
                     key=lambda movimiento: str(getattr(movimiento, self.sort_value)).lower(),
@@ -90,7 +103,7 @@ class PageState(rx.State):
                 movimiento
                 for movimiento in movimientos
                 if any(
-                    search_value in str(getattr(movimiento, attr)).lower()
+                    search_value in str(getattr(movimiento, attr)).lower() #Get attr es como Movimiento.Fecha
                     for attr in [
                         "Fecha",
                         "Concepto",
@@ -101,8 +114,17 @@ class PageState(rx.State):
                 )
             ]
 
-        return movimientos
+        
+            self.ingresos_filtrado = f"Ingresos: {round(sum([mov.Importe for mov in movimientos if mov.Importe > 0]),2)} €"
+            self.gastos_filtrado = f"Gastos: {round(sum([mov.Importe for mov in movimientos if mov.Importe < 0]),2)} €"
+            self.balance_filtrado = f"Balance: {round(sum([mov.Importe for mov in movimientos]),2)} €"
 
+        
+
+        return movimientos
+    
+
+    
 
     @rx.var(cache=True)
     def page_number(self) -> int:
@@ -241,6 +263,34 @@ class PageState(rx.State):
 
         self.data_balances_anuales = lista_anual
 
+    
+    def obtener_categorias(self):
+        movimientos = self.Tabla
+        categorias = sorted(set([row.Categoria for row in movimientos]))  # Ordenar fechas
+        lista = []
+
+
+
+        for categoria in categorias:
+            data = {}
+            movimientos_categoricos = [mov for mov in movimientos if mov.Categoria == categoria]
+
+            ingresos = sum([mov.Importe for mov in movimientos_categoricos if mov.Importe > 0])
+            gastos = sum([mov.Importe for mov in movimientos_categoricos if mov.Importe < 0])
+
+            tot_ingresos = sum([mov.Importe for mov in movimientos if mov.Importe > 0])
+            tot_gastos = sum([mov.Importe for mov in movimientos if mov.Importe < 0])
+
+
+
+            data["Categoria"] = f"{categoria} %"
+            data["Ingresos"] = round(ingresos/tot_ingresos, 2)*100
+            data["Gastos"] = abs(round(gastos/tot_gastos, 2))*100
+
+
+            lista.append(data)
+
+        self.data_categorias = lista
 
 
     

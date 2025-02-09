@@ -14,9 +14,16 @@ def _header_cell(text: str, icon: str) -> rx.Component:
         ),
     )
 
+
+
+
 def _pagination_view() -> rx.Component:
     return (
         rx.hstack(
+            rx.badge(PageState.ingresos_filtrado, color_scheme="green"),
+            rx.badge(PageState.gastos_filtrado, color_scheme="red"),
+            rx.badge(PageState.balance_filtrado, color_scheme="purple"),
+
             rx.text(
                 "Página ",
                 rx.code(PageState.page_number),
