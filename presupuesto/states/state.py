@@ -2,11 +2,14 @@ import reflex as rx
 import pandas as pd
 from datetime import datetime
 from presupuesto.models.movimiento import Movimiento
-from presupuesto.api.api import obtener_Tabla
+from presupuesto.api.api import obtener_Tabla, obtener_Saldo
 today = datetime.today()
 
 class PageState(rx.State):
+    Bancos: list[str] =["Santander","Revolut","MY Investor","Trade Republic","Efectivo"]
     Tabla: list[Movimiento] = []
+    Tabla_filtrada: list[Movimiento] = []
+    Saldo: str
     banco: str = "Santander"
     start_date: str = today.replace(month=1, day=1).strftime("%a %b %d %Y")   # Valor por defecto para start_date
     end_date: str = today.strftime("%a %b %d %Y") # Valor por defecto vacío para end_date
@@ -34,6 +37,11 @@ class PageState(rx.State):
     gastos_filtrado: str = ""
     balance_filtrado: str = ""
     
+    @rx.event
+    async def change_bank(self, var: str):
+        self.banco = var
+        await self.crear_tabla()
+
 
     def set_mostrado(self, var: str|list[str]):
         self.Mostrar = var
@@ -62,10 +70,13 @@ class PageState(rx.State):
 
     async def crear_tabla(self):
         movimientos = await obtener_Tabla(self.banco,self.fecha_ini,self.fecha_fin)
+        Saldo = await obtener_Saldo(self.banco,self.fecha_fin)
+        self.Saldo = f"Saldo: {round(Saldo,2)} €"
         # Verifica el contenido de los movimientos
         # Asegúrate de que las claves del diccionario coinciden con las propiedades del modelo Movimiento
         
         self.Tabla = [Movimiento(**row) for row in movimientos]
+        self.Tabla_filtrada = self.Tabla
         self.total_items = len(self.Tabla)
         self.obtener_ingresos_gastos()
         self.obtener_categorias()
@@ -109,19 +120,20 @@ class PageState(rx.State):
                         "Concepto",
                         "Categoria",
                         "Importe",
-                        "Saldo",
                     ]
                 )
             ]
 
+            self.Tabla_filtrada = movimientos
         
+        return movimientos
+    
+    @rx.event
+    def calcular_balance_tabla(self):
+            movimientos = self.Tabla_filtrada
             self.ingresos_filtrado = f"Ingresos: {round(sum([mov.Importe for mov in movimientos if mov.Importe > 0]),2)} €"
             self.gastos_filtrado = f"Gastos: {round(sum([mov.Importe for mov in movimientos if mov.Importe < 0]),2)} €"
             self.balance_filtrado = f"Balance: {round(sum([mov.Importe for mov in movimientos]),2)} €"
-
-        
-
-        return movimientos
     
 
     
@@ -263,7 +275,7 @@ class PageState(rx.State):
 
         self.data_balances_anuales = lista_anual
 
-    
+   
     def obtener_categorias(self):
         movimientos = self.Tabla
         categorias = sorted(set([row.Categoria for row in movimientos]))  # Ordenar fechas
@@ -283,9 +295,9 @@ class PageState(rx.State):
 
 
 
-            data["Categoria"] = f"{categoria} %"
-            data["Ingresos"] = round(ingresos/tot_ingresos, 2)*100
-            data["Gastos"] = abs(round(gastos/tot_gastos, 2))*100
+            data["Categoria"] = f"{categoria}"
+            data["Ingresos"] = round(ingresos, 2)
+            data["Gastos"] = abs(round(gastos, 2))
 
 
             lista.append(data)

@@ -48,6 +48,26 @@ class SupabaseAPI:
         
         return []
 
-    def obtener_saldos(self, banco: str, fecha_inicio: str, fecha_fin: str) -> list:
-        # Método para obtener los saldos en un rango de fechas, aún por implementar
-        pass
+    def obtener_saldos(self, banco: str, fecha: str) -> list:
+        # Método para obtener los saldo en una fecha
+        Saldo_inicial = self.obtener_saldo_inicial(banco)
+
+        # Construir la consulta base
+        query = self.supabase.table(banco).select("IMPORTE") \
+            .lte("FECHA", fecha) \
+            .order("FECHA")
+
+
+
+        # Ejecutar la consulta y devolver los resultados
+        response = query.execute()
+        # Si hay datos, los procesamos cambiando los nombres de las claves a minúsculas con la primera en mayúscula
+        if response.data:
+            transformed_data = [
+                {key.capitalize(): value for key, value in row.items()}  # Cambia las claves a formato deseado
+                for row in response.data
+            ]
+
+            return Saldo_inicial + sum([data["Importe"]  for data in transformed_data])
+        return 0.0
+

@@ -14,7 +14,13 @@ def balances(data):
             data_key="Fecha", height=30, stroke="#8884d8"
         ),
         rx.recharts.x_axis(data_key="Fecha"),
-        rx.recharts.y_axis(),
+        rx.recharts.y_axis(
+            label={
+                "value": "Euros",
+                "angle": -90,
+                "position": "left",
+            },
+        ),
         rx.recharts.cartesian_grid(stroke_dasharray="3 3"),
         rx.recharts.graphing_tooltip(),
         data=data,

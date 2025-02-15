@@ -17,6 +17,7 @@ def _header_cell(text: str, icon: str) -> rx.Component:
 
 
 
+
 def _pagination_view() -> rx.Component:
     return (
         rx.hstack(
@@ -100,8 +101,6 @@ def _mostrar_movimiento(mov: Movimiento, index: int) -> rx.Component:
                 rx.text(mov.Importe,color_scheme='red')
             )
         ),
-        rx.table.cell(mov.Saldo),
-
 
         style={"_hover": {"bg": hover_color}, "bg": bg_color},
         align="center",
@@ -110,6 +109,17 @@ def _mostrar_movimiento(mov: Movimiento, index: int) -> rx.Component:
 def main_table() -> rx.Component:
     return rx.fragment(
         rx.flex(
+            rx.select(
+                items=PageState.Bancos,
+                value=PageState.banco,
+                on_change=PageState.change_bank
+            ),
+            rx.badge(PageState.Saldo,size="3",variant="outline"),
+            rx.spacer(),
+            rx.button(
+                "Balance",
+                on_click=PageState.calcular_balance_tabla,
+            ),
             calendar_dialog(),
             rx.cond(
                 PageState.sort_reverse,
@@ -134,7 +144,6 @@ def main_table() -> rx.Component:
                     "Concepto",
                     "Categoria",
                     "Importe",
-                    "Saldo",
                 ],
                 placeholder="Ordenar por...",
                 size="3",
@@ -172,7 +181,6 @@ def main_table() -> rx.Component:
                     _header_cell("Concepto", "hand-coins"),
                     _header_cell("Categoria", "briefcase-business"),
                     _header_cell("Importe", "euro"),
-                    _header_cell("Saldo", "euro"),
                 ),
             ),
         rx.table.body(
