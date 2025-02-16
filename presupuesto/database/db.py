@@ -15,22 +15,33 @@ class SupabaseAPI:
 
     def obtener_saldo_inicial(self, banco: str) -> float:
         # Obtener el saldo inicial restando el importe de la primera transacción
-        response = self.supabase.table(banco).select("SALDO", "IMPORTE") \
-            .order("FECHA") \
-            .limit(1) \
-            .execute()
+        query = self.supabase.table("Cuentas").select("Saldo_ini") \
+            
+            
+        if banco=="Global":
+            pass
+        else:
+            query=query.eq("Cuenta",banco) \
+            
+        # Ejecutar la consulta y devolver los resultados
+        response = query.execute()
 
         if response.data:
-            saldo, importe = response.data[0]["SALDO"], response.data[0]["IMPORTE"]
-            return saldo - importe
+            return sum([data["Saldo_ini"] for data in response.data])
+
         return 0.0  # Si no hay datos, retornar 0
 
     def obtener_tabla(self, banco: str, fecha_inicio: str, fecha_fin: str, Categoria: str | None = None) -> list:
         # Construir la consulta base
-        query = self.supabase.table(banco).select("FECHA", "CONCEPTO", "Categoria", "IMPORTE", "SALDO") \
+        query = self.supabase.table("Movimientos").select("Banco","FECHA", "CONCEPTO", "Categoria", "IMPORTE") \
             .gte("FECHA", fecha_inicio) \
             .lte("FECHA", fecha_fin) \
             .order("FECHA")
+        
+        if banco=="Global":
+            pass
+        else:
+            query=query.eq("Banco",banco) \
 
         # Filtrar por categoría si es proporcionada
         if Categoria:
@@ -53,10 +64,14 @@ class SupabaseAPI:
         Saldo_inicial = self.obtener_saldo_inicial(banco)
 
         # Construir la consulta base
-        query = self.supabase.table(banco).select("IMPORTE") \
+        query = self.supabase.table("Movimientos").select("IMPORTE") \
             .lte("FECHA", fecha) \
             .order("FECHA")
 
+        if banco=="Global":
+            pass
+        else:
+            query=query.eq("Banco",banco) \
 
 
         # Ejecutar la consulta y devolver los resultados

@@ -3,6 +3,9 @@ import reflex as rx
 from presupuesto.models.movimiento import Movimiento
 from presupuesto.states.state import PageState
 from presupuesto.components.calendario import calendar_dialog
+from presupuesto.components.item_badges import item_badge
+
+from presupuesto.constants import Colores_Bancos,Colores_Categorias
 
 def _header_cell(text: str, icon: str) -> rx.Component:
     return rx.table.column_header_cell(
@@ -21,6 +24,11 @@ def _header_cell(text: str, icon: str) -> rx.Component:
 def _pagination_view() -> rx.Component:
     return (
         rx.hstack(
+            rx.text("Intervalo de fechas: "),
+            rx.text(PageState.fecha_ini),
+            rx.icon("arrow-right"),
+            rx.text(PageState.fecha_fin),
+            rx.spacer(),
             rx.badge(PageState.ingresos_filtrado, color_scheme="green"),
             rx.badge(PageState.gastos_filtrado, color_scheme="red"),
             rx.badge(PageState.balance_filtrado, color_scheme="purple"),
@@ -92,8 +100,9 @@ def _mostrar_movimiento(mov: Movimiento, index: int) -> rx.Component:
     )
     return rx.table.row(
         rx.table.row_header_cell(mov.Fecha),
+        rx.table.cell(item_badge(mov.Banco, Colores_Bancos)),
         rx.table.cell(mov.Concepto),
-        rx.table.cell(rx.badge(mov.Categoria,variant="outline")),
+        rx.table.cell(item_badge(mov.Categoria, Colores_Categorias)),
         rx.table.cell(
             rx.cond(
                 mov.Importe>0,
@@ -109,6 +118,7 @@ def _mostrar_movimiento(mov: Movimiento, index: int) -> rx.Component:
 def main_table() -> rx.Component:
     return rx.fragment(
         rx.flex(
+            rx.heading("Cuenta Seleccionada: "),
             rx.select(
                 items=PageState.Bancos,
                 value=PageState.banco,
@@ -140,6 +150,7 @@ def main_table() -> rx.Component:
             ),
             rx.select(
                 [
+                    "Banco",
                     "Fecha",
                     "Concepto",
                     "Categoria",
@@ -178,6 +189,7 @@ def main_table() -> rx.Component:
             rx.table.header(
                 rx.table.row(
                     _header_cell("Fecha", "calendar-days"),
+                    _header_cell("Cuenta", "landmark"),
                     _header_cell("Concepto", "hand-coins"),
                     _header_cell("Categoria", "briefcase-business"),
                     _header_cell("Importe", "euro"),

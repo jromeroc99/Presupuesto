@@ -6,11 +6,11 @@ from presupuesto.api.api import obtener_Tabla, obtener_Saldo
 today = datetime.today()
 
 class PageState(rx.State):
-    Bancos: list[str] =["Santander","Revolut","MY Investor","Trade Republic","Efectivo"]
+    Bancos: list[str] =["Global"]
     Tabla: list[Movimiento] = []
     Tabla_filtrada: list[Movimiento] = []
     Saldo: str
-    banco: str = "Santander"
+    banco: str = "Global"
     start_date: str = today.replace(month=1, day=1).strftime("%a %b %d %Y")   # Valor por defecto para start_date
     end_date: str = today.strftime("%a %b %d %Y") # Valor por defecto vacío para end_date
     fecha_ini: str = today.replace(month=1, day=1).strftime("%Y-%m-%d")
@@ -70,6 +70,11 @@ class PageState(rx.State):
 
     async def crear_tabla(self):
         movimientos = await obtener_Tabla(self.banco,self.fecha_ini,self.fecha_fin)
+        if self.banco == "Global":
+            Bancos = list(set([mov.Banco for mov in self.Tabla]))
+            Bancos.append("Global")
+            self.Bancos = Bancos
+
         Saldo = await obtener_Saldo(self.banco,self.fecha_fin)
         self.Saldo = f"Saldo: {round(Saldo,2)} €"
         # Verifica el contenido de los movimientos
@@ -94,7 +99,7 @@ class PageState(rx.State):
 
         # Filtrar movimientos basado en el valor seleccionado
         if self.sort_value:
-            if self.sort_value in ["Saldo", "Importe"]:  # Orrdena los numeros
+            if self.sort_value in ["Importe"]:  # Orrdena los numeros
                 movimientos = sorted(
                     movimientos,
                     key=lambda movimiento: float(getattr(movimiento, self.sort_value)),
@@ -116,6 +121,7 @@ class PageState(rx.State):
                 if any(
                     search_value in str(getattr(movimiento, attr)).lower() #Get attr es como Movimiento.Fecha
                     for attr in [
+                        "Banco",
                         "Fecha",
                         "Concepto",
                         "Categoria",
