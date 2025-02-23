@@ -100,9 +100,9 @@ def _mostrar_movimiento(mov: Movimiento, index: int) -> rx.Component:
     )
     return rx.table.row(
         rx.table.row_header_cell(mov.Fecha),
-        rx.table.cell(item_badge(mov.Banco, Colores_Bancos)),
+        rx.table.cell(item_badge(mov.Cuentas, Colores_Bancos)),
         rx.table.cell(mov.Concepto),
-        rx.table.cell(item_badge(mov.Categoria, Colores_Categorias)),
+        rx.table.cell(item_badge(mov.Categorias, Colores_Categorias)),
         rx.table.cell(
             rx.cond(
                 mov.Importe>0,

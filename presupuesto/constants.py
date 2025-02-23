@@ -4,7 +4,7 @@ from reflex.components.radix.themes.base import LiteralAccentColor
 Colores_Bancos: Dict[str, LiteralAccentColor] = { 
   "Santander": "red",
   "Trade Republic": "gray",
-  "MY Investor": "purple",
+  "My Investor": "purple",
   "Revolut": "blue",
   "Efectivo": "orange",
   "Caixa": "blue"

@@ -6,6 +6,7 @@ from presupuesto.api.api import obtener_Tabla, obtener_Saldo
 today = datetime.today()
 
 class PageState(rx.State):
+    user_id: str = "72392445-8123-4fb2-ab77-c0620d77f0c4"
     Bancos: list[str] =["Global"]
     Tabla: list[Movimiento] = []
     Tabla_filtrada: list[Movimiento] = []
@@ -69,13 +70,13 @@ class PageState(rx.State):
 
 
     async def crear_tabla(self):
-        movimientos = await obtener_Tabla(self.banco,self.fecha_ini,self.fecha_fin)
+        movimientos = await obtener_Tabla(self.user_id,self.banco,self.fecha_ini,self.fecha_fin)
         if self.banco == "Global":
-            Bancos = list(set([mov.Banco for mov in self.Tabla]))
+            Bancos = list(set([mov.Cuentas for mov in self.Tabla]))
             Bancos.append("Global")
             self.Bancos = Bancos
 
-        Saldo = await obtener_Saldo(self.banco,self.fecha_fin)
+        Saldo = await obtener_Saldo(self.user_id,self.banco,self.fecha_fin)
         self.Saldo = f"Saldo: {round(Saldo,2)} €"
         # Verifica el contenido de los movimientos
         # Asegúrate de que las claves del diccionario coinciden con las propiedades del modelo Movimiento
@@ -121,10 +122,10 @@ class PageState(rx.State):
                 if any(
                     search_value in str(getattr(movimiento, attr)).lower() #Get attr es como Movimiento.Fecha
                     for attr in [
-                        "Banco",
+                        "Cuentas",
                         "Fecha",
                         "Concepto",
-                        "Categoria",
+                        "Categorias",
                         "Importe",
                     ]
                 )
@@ -284,14 +285,14 @@ class PageState(rx.State):
    
     def obtener_categorias(self):
         movimientos = self.Tabla
-        categorias = sorted(set([row.Categoria for row in movimientos]))  # Ordenar fechas
+        categorias = sorted(set([row.Categorias for row in movimientos]))  # Ordenar fechas
         lista = []
 
 
 
         for categoria in categorias:
             data = {}
-            movimientos_categoricos = [mov for mov in movimientos if mov.Categoria == categoria]
+            movimientos_categoricos = [mov for mov in movimientos if mov.Categorias == categoria]
 
             ingresos = sum([mov.Importe for mov in movimientos_categoricos if mov.Importe > 0])
             gastos = sum([mov.Importe for mov in movimientos_categoricos if mov.Importe < 0])

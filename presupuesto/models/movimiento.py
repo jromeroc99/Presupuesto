@@ -2,10 +2,10 @@ import reflex as rx
 
 
 class Movimiento(rx.Base):
-    Banco: str
+    Cuentas: str
     Fecha: str
     Concepto: str
-    Categoria:str
+    Categorias:str
     Importe: float
 
 

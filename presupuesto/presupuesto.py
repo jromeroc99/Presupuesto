@@ -12,5 +12,5 @@ from presupuesto.api.api import obtener_Tabla, obtener_Saldo
 
 app = rx.App()
 app.add_page(index)
-app.api.add_api_route("/movimientos/{banco}/{fecha_inicio}/{fecha_fin}", obtener_Tabla)
-app.api.add_api_route("/saldo/{banco}/{fecha}/", obtener_Saldo)
+app.api.add_api_route("/movimientos/{user_id}/{banco}/{fecha_inicio}/{fecha_fin}", obtener_Tabla)
+app.api.add_api_route("/saldo/{user_id}/{banco}/{fecha}/", obtener_Saldo)
