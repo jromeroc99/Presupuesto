@@ -24,10 +24,12 @@ def _header_cell(text: str, icon: str) -> rx.Component:
 def _pagination_view() -> rx.Component:
     return (
         rx.hstack(
-            rx.text("Intervalo de fechas: "),
-            rx.text(PageState.fecha_ini),
-            rx.icon("arrow-right"),
-            rx.text(PageState.fecha_fin),
+            #rx.text("Intervalo de fechas: "),
+            #rx.text(PageState.fecha_ini),
+            #rx.icon("arrow-right"),
+            #rx.text(PageState.fecha_fin),
+            rx.badge(PageState.inversion_filtrado, color_scheme="blue"),
+            rx.badge(PageState.transferencias_filtrado, color_scheme="orange"),
             rx.spacer(),
             rx.badge(PageState.ingresos_filtrado, color_scheme="green"),
             rx.badge(PageState.gastos_filtrado, color_scheme="red"),

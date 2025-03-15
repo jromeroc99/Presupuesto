@@ -1,7 +1,7 @@
 python-dotenv==1.0.1
 supabase==2.13.0
 pandas==2.2.3
-reflex==0.7.0
+reflex==0.7.2
 reflex-calendar==0.0.6
 
 

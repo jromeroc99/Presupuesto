@@ -37,6 +37,8 @@ class PageState(rx.State):
     ingresos_filtrado: str = ""
     gastos_filtrado: str = ""
     balance_filtrado: str = ""
+    inversion_filtrado: str = ""
+    transferencias_filtrado: str = ""
     
     @rx.event
     async def change_bank(self, var: str):
@@ -87,11 +89,14 @@ class PageState(rx.State):
         self.obtener_ingresos_gastos()
         self.obtener_categorias()
 
-        self.ingresos_filtrado = f"Ingresos: {round(sum([mov.Importe for mov in self.Tabla if mov.Importe > 0]),2)} €"
-        self.gastos_filtrado = f"Gastos: {round(sum([mov.Importe for mov in self.Tabla if mov.Importe < 0]),2)} €"
-        self.balance_filtrado = f"Balance: {round(sum([mov.Importe for mov in self.Tabla]),2)} €"
+        self.ingresos_filtrado = f"Ingresos: {round(sum(mov.Importe for mov in self.Tabla if mov.Importe >= 0 and mov.Categorias not in ['Inversion', 'Transferencias']), 2)} €"
+        self.gastos_filtrado = f"Gastos: {round(sum(mov.Importe for mov in self.Tabla if mov.Importe < 0 and mov.Categorias not in ['Inversion', 'Transferencias']), 2)} €"
+        self.balance_filtrado = f"Balance: {round(sum(mov.Importe for mov in self.Tabla if mov.Categorias not in ['Inversion', 'Transferencias']),2)} €"
 
-        
+        self.inversion_filtrado = f"Inversion: {round(sum([mov.Importe for mov in self.Tabla if mov.Categorias == 'Inversion']),2)} €"
+        self.transferencias_filtrado = f"Transferencias: {round(sum([mov.Importe for mov in self.Tabla if mov.Categorias == 'Transferencias']),2)} €"
+
+    
 
 
     @rx.var(cache=True)
@@ -138,9 +143,12 @@ class PageState(rx.State):
     @rx.event
     def calcular_balance_tabla(self):
             movimientos = self.Tabla_filtrada
-            self.ingresos_filtrado = f"Ingresos: {round(sum([mov.Importe for mov in movimientos if mov.Importe > 0]),2)} €"
-            self.gastos_filtrado = f"Gastos: {round(sum([mov.Importe for mov in movimientos if mov.Importe < 0]),2)} €"
-            self.balance_filtrado = f"Balance: {round(sum([mov.Importe for mov in movimientos]),2)} €"
+            self.ingresos_filtrado = f"Ingresos: {round(sum(mov.Importe for mov in self.Tabla if mov.Importe >= 0 and mov.Categorias not in ['Inversion', 'Transferencias']), 2)} €"
+            self.gastos_filtrado = f"Gastos: {round(sum(mov.Importe for mov in self.Tabla if mov.Importe < 0 and mov.Categorias not in ['Inversion', 'Transferencias']), 2)} €"
+            self.balance_filtrado = f"Balance: {round(sum(mov.Importe for mov in self.Tabla if mov.Categorias not in ['Inversion', 'Transferencias']),2)} €"
+
+            self.inversion_filtrado = f"Inversion: {round(sum([mov.Importe for mov in self.Tabla if mov.Categorias == 'Inversion']),2)} €"
+            self.transferencias_filtrado = f"Transferencias: {round(sum([mov.Importe for mov in self.Tabla if mov.Categorias == 'Transferencias']),2)} €"
     
 
     
